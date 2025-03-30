@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Embed with Title and Styled Description</title>
+    <title>YouTube Embed with Save Functionality</title>
     <style>
         #videoDescription {
             font-family: Arial, sans-serif;
@@ -18,12 +18,13 @@
     </style>
 </head>
 <body>
-    <h1>YouTube Video Embed with Title and Editable Description 0.1</h1>
+    <h1>YouTube Video Embed with Title and Editable Description 0.2</h1>
     <input type="text" id="youtubeUrl" placeholder="Enter YouTube URL" style="width: 300px;">
     <button onclick="embedVideo()">Embed Video</button>
     <p id="videoTitle"></p>
     <div id="videoContainer" style="margin-top: 10px;"></div>
     <textarea id="videoDescription" placeholder="Video description will appear here..."></textarea>
+    <button id="saveButton" onclick="saveChanges()" style="margin-top: 10px;">Save</button>
 
     <script>
         function embedVideo() {
@@ -53,6 +54,18 @@
             } else {
                 alert('Invalid YouTube URL!');
             }
+        }
+
+        function saveChanges() {
+            // Remove input fields and buttons
+            document.getElementById('youtubeUrl').style.display = 'none';
+            document.querySelector('button[onclick="embedVideo()"]').style.display = 'none';
+            document.getElementById('saveButton').style.display = 'none';
+
+            // Convert the description to uneditable format
+            const descriptionArea = document.getElementById('videoDescription');
+            const descriptionText = descriptionArea.value;
+            descriptionArea.outerHTML = `<p style="font-family: Arial, sans-serif;">${descriptionText}</p>`;
         }
     </script>
 </body>
