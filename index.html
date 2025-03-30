@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Embed</title>
+</head>
+<body>
+    <h1>YouTube Video Embed</h1>
+    <input type="text" id="youtubeUrl" placeholder="Enter YouTube URL" style="width: 300px;">
+    <button onclick="embedVideo()">Embed Video</button>
+    <div id="videoContainer"></div>
+
+    <script>
+        function embedVideo() {
+            const url = document.getElementById('youtubeUrl').value;
+            const videoId = url.split('v=')[1]?.split('&')[0]; // Extract the video ID
+            
+            if (videoId) {
+                // Embed the video
+                const videoContainer = document.getElementById('videoContainer');
+                videoContainer.innerHTML = `<iframe width="560" height="315" 
+                    src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+            } else {
+                alert('Invalid YouTube URL!');
+            }
+        }
+    </script>
+</body>
+</html>
