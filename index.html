@@ -2,8 +2,112 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Film Selection</title>
+    <meta name="viewport" content="width=, initial-scale=1.0">
+    <title>Film Selection with Voting</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+        // Your Firebase config (replace with actual values)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNWahOcjZM_PIxZojpP9378KgbLGGFxfI",
+    	    authDomain: "filmvote-a3948.firebaseapp.com",
+   	    projectId: "filmvote-a3948",
+   	    storageBucket: "filmvote-a3948.firebasestorage.app",
+   	    messagingSenderId: "797571675137",
+   	    appId: "1:797571675137:web:9702215c002ece5708bc00"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        function addVideo() {
+            const url = document.getElementById('youtubeUrl').value;
+            const videoId = url.split('v=')[1]?.split('&')[0]; // Extract the video ID
+            
+            if (videoId) {
+                // Create video block
+                const videoBlock = document.createElement('div');
+                videoBlock.className = 'videoBlock';
+
+                // Fetch video details using YouTube API
+                const apiKey = 'AIzaSyAeEVIqXR3KN0no1zM6V8P2P_Xs2k9NWIQ'; 
+                fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`)
+                    .then(response => response.json())
+                    .then(async data => {
+                        const title = data.items[0]?.snippet?.title || "No title available.";
+                        const description = data.items[0]?.snippet?.description || "No description available.";
+
+                        // Create title element
+                        const titleElement = document.createElement('p');
+                        titleElement.className = 'videoTitle';
+                        titleElement.textContent = title;
+
+                        // Create description textarea
+                        const descriptionArea = document.createElement('textarea');
+                        descriptionArea.className = 'videoDescription';
+                        descriptionArea.value = description;
+
+                        // Embed video
+                        const videoContainer = document.createElement('div');
+                        videoContainer.className = 'videoContainer';
+                        videoContainer.innerHTML = `<iframe width="560" height="315" 
+                            src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+
+                        // Voting system
+                        const voteRef = doc(db, "votes", videoId);
+                        const voteSnap = await getDoc(voteRef);
+                        let voteCount = voteSnap.exists() ? voteSnap.data().count : 0;
+
+                        // Create vote button
+                        const voteButton = document.createElement('button');
+                        voteButton.textContent = "Vote";
+                        voteButton.onclick = async function() {
+                            voteCount++;
+                            await updateDoc(voteRef, { count: voteCount });
+                            voteCountElement.textContent = `Votes: ${voteCount}`;
+                        };
+
+                        // Create vote count display
+                        const voteCountElement = document.createElement('p');
+                        voteCountElement.textContent = `Votes: ${voteCount}`;
+
+                        // Append elements
+                        videoBlock.appendChild(titleElement);
+                        videoBlock.appendChild(videoContainer);
+                        videoBlock.appendChild(descriptionArea);
+                        videoBlock.appendChild(voteButton);
+                        videoBlock.appendChild(voteCountElement);
+
+                        document.getElementById('videos').appendChild(videoBlock);
+
+                        // If vote doesn't exist in Firebase, create it
+                        if (!voteSnap.exists()) {
+                            await setDoc(voteRef, { count: 0 });
+                        }
+                    })
+                    .catch(error => console.error('Error fetching video details:', error));
+            } else {
+                alert('Invalid YouTube URL!');
+            }
+        }
+
+        function saveChanges() {
+            document.getElementById('youtubeUrl').style.display = 'none';
+            document.querySelector('button[onclick="addVideo()"]').style.display = 'none';
+            document.getElementById('saveButton').style.display = 'none';
+
+            // Convert descriptions to uneditable format
+            document.querySelectorAll('.videoDescription').forEach(area => {
+                const descriptionText = area.value;
+                const descriptionParagraph = document.createElement('p');
+                descriptionParagraph.style.fontFamily = 'Arial, sans-serif';
+                descriptionParagraph.textContent = descriptionText;
+                area.parentNode.replaceChild(descriptionParagraph, area);
+            });
+        }
+    </script>
     <style>
         .videoDescription {
             font-family: Arial, sans-serif;
@@ -22,79 +126,12 @@
     </style>
 </head>
 <body>
-    <h1>YouTube Video Embed with Titles and Editable Descriptions</h1>
+    <h1>YouTube Video Embed with Titles, Editable Descriptions, and Voting</h1>
     <div>
         <input type="text" id="youtubeUrl" placeholder="Enter YouTube URL" style="width: 300px;">
         <button onclick="addVideo()">Add Video</button>
     </div>
     <div id="videos"></div>
     <button id="saveButton" onclick="saveChanges()" style="margin-top: 10px;">Save</button>
-
-    <script>
-        const videosContainer = document.getElementById('videos');
-
-        function addVideo() {
-            const url = document.getElementById('youtubeUrl').value;
-            const videoId = url.split('v=')[1]?.split('&')[0]; // Extract the video ID
-            
-            if (videoId) {
-                // Create a new video block
-                const videoBlock = document.createElement('div');
-                videoBlock.className = 'videoBlock';
-
-                // Fetch video details using YouTube Data API
-                const apiKey = 'AIzaSyAeEVIqXR3KN0no1zM6V8P2P_Xs2k9NWIQ'; // Replace with your YouTube Data API key
-                fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        // Extract and display the title
-                        const title = data.items[0]?.snippet?.title || "No title available.";
-                        const titleElement = document.createElement('p');
-                        titleElement.className = 'videoTitle';
-                        titleElement.textContent = title;
-
-                        // Extract and display the description
-                        const description = data.items[0]?.snippet?.description || "No description available.";
-                        const descriptionArea = document.createElement('textarea');
-                        descriptionArea.className = 'videoDescription';
-                        descriptionArea.value = description;
-
-                        // Embed the video
-                        const videoContainer = document.createElement('div');
-                        videoContainer.className = 'videoContainer';
-                        videoContainer.innerHTML = `<iframe width="560" height="315" 
-                            src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
-
-                        // Append all elements to the video block
-                        videoBlock.appendChild(titleElement);
-                        videoBlock.appendChild(videoContainer);
-                        videoBlock.appendChild(descriptionArea);
-
-                        // Add the video block to the container
-                        videosContainer.appendChild(videoBlock);
-                    })
-                    .catch(error => console.error('Error fetching video details:', error));
-            } else {
-                alert('Invalid YouTube URL!');
-            }
-        }
-
-        function saveChanges() {
-            // Remove input box and add button
-            document.getElementById('youtubeUrl').style.display = 'none';
-            document.querySelector('button[onclick="addVideo()"]').style.display = 'none';
-            document.getElementById('saveButton').style.display = 'none';
-
-            // Convert all descriptions to uneditable format
-            const descriptionAreas = document.querySelectorAll('.videoDescription');
-            descriptionAreas.forEach(area => {
-                const descriptionText = area.value;
-                const descriptionParagraph = document.createElement('p');
-                descriptionParagraph.style.fontFamily = 'Arial, sans-serif';
-                descriptionParagraph.textContent = descriptionText;
-                area.parentNode.replaceChild(descriptionParagraph, area);
-            });
-        }
-    </script>
 </body>
 </html>
